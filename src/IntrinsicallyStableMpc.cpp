@@ -65,7 +65,8 @@ double IntrinsicallyStableMpc1d::procOnce(const std::vector<RefData> & ref_data_
                                           double, // current_time
                                           double control_dt)
 {
-  std::array<double, 2> current_zmp_limits;
+  // Khởi tạo giá trị mặc định cho current_zmp_limits để tránh lỗi uninitialized
+  std::array<double, 2> current_zmp_limits = {0.0, 0.0};
 
   // Set QP coefficients
   // See equation (14) in the paper

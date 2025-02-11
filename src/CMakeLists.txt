@@ -1,3 +1,8 @@
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
+find_package(visualization_msgs REQUIRED)
+
 add_library(CCC
   CommonModels.cpp
   PreviewControlZmp.cpp
@@ -14,12 +19,13 @@ add_library(CCC
   DdpCentroidal.cpp
   DdpSingleRigidBody.cpp
   )
-if(DEFINED CATKIN_DEVEL_PREFIX)
+if(DEFINED USE_ROS2)
   target_include_directories(CCC PUBLIC
-    ${catkin_INCLUDE_DIRS}
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
   )
   target_link_libraries(CCC PUBLIC
-    ${catkin_LIBRARIES} mc_rtc::mc_rtc_utils mc_rtc::mc_rtc_gui
+    mc_rtc::mc_rtc_utils mc_rtc::mc_rtc_gui qp_solver_collection::QpSolverCollection force_control_collection::ForceColl nmpc_ddp::nmpc_ddp
   )
 else()
   target_link_libraries(CCC PUBLIC
@@ -34,6 +40,13 @@ target_include_directories(CCC PUBLIC
   $<INSTALL_INTERFACE:include>
 )
 target_compile_features(CCC PUBLIC cxx_std_17)
+
+ament_target_dependencies(CCC PUBLIC
+  rclcpp
+  std_msgs
+  std_srvs
+  visualization_msgs
+)
 
 if(BUILD_SHARED_LIBS)
   set_target_properties(CCC PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR} VERSION ${PROJECT_VERSION})

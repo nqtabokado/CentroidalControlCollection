@@ -1,0 +1,16 @@
+version: '3.3'
+
+services:
+  centroidal_control_collection:
+    image: centroidal_control_collection:humble
+    user: root
+    container_name: centroidal_control_collection-humble
+    build:
+      context: ..
+      dockerfile: ./dockerfiles/Dockerfile.windows
+    volumes:
+      - "../:/root/catkin_ws/src/centroidal_control_collection/"
+    privileged: True
+    stdin_open: True
+    # network_mode: host
+    command: bash

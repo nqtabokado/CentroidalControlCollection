@@ -48,7 +48,8 @@ double LinearMpcZmp1d::procOnce(const std::vector<RefData> & ref_data_seq,
                                 double, // current_time
                                 double control_dt)
 {
-  std::array<double, 2> current_zmp_limits;
+  // Khởi tạo giá trị mặc định cho current_zmp_limits để tránh lỗi uninitialized
+  std::array<double, 2> current_zmp_limits = {0.0, 0.0};
 
   // Set QP coefficients
   qp_coeff_.ineq_vec_.head(horizon_steps_) = seq_ext_->A_seq_ * initial_param;

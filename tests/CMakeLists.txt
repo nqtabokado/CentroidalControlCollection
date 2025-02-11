@@ -1,5 +1,5 @@
-if(NOT DEFINED CATKIN_DEVEL_PREFIX)
-  find_package(GTest REQUIRED)
+if(NOT DEFINED USE_ROS2)
+  find_package(ament_cmake_gtest REQUIRED)
   include(GoogleTest)
   # Prevents discovery failure before install
   # No effect in CMake < 3.18
@@ -10,8 +10,9 @@ if(NOT DEFINED CATKIN_DEVEL_PREFIX)
     gtest_discover_tests(${NAME})
   endfunction()
 else()
+  find_package(ament_cmake_gtest REQUIRED)
   function(add_CCC_test NAME)
-    catkin_add_gtest(${NAME} src/${NAME}.cpp)
+    ament_add_gtest(${NAME} src/${NAME}.cpp)
     target_link_libraries(${NAME} CCC)
   endfunction()
 endif()
@@ -41,15 +42,13 @@ endforeach()
 
 option(ENABLE_PYBULLET_TEST "Enable tests with pybullet simulation" OFF)
 if(ENABLE_PYBULLET_TEST)
-  find_package(rostest REQUIRED)
-
   set(CCC_rostest_list
     TestSimDdpSingleRigidBody
   )
 
-  if(DEFINED CATKIN_DEVEL_PREFIX)
+  if(DEFINED USE_ROS2)
     foreach(NAME IN LISTS CCC_rostest_list)
-      add_rostest_gtest(${NAME} test/${NAME}.test src/${NAME}.cpp)
+      ament_add_gtest(${NAME} test/${NAME}.test src/${NAME}.cpp)
       target_link_libraries(${NAME} CCC)
     endforeach()
   endif()

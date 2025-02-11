@@ -133,8 +133,9 @@ protected:
       }
       else if(i == iterMax - 1)
       {
-        CCC_WARN_STREAM("[PreviewControl] Solution of Riccati equation did not converged: " << relNorm << " > "
-                                                                                            << relNormThre);
+        std::stringstream ss;
+        ss << "[PreviewControl] Solution of Riccati equation did not converged: " << relNorm << " > " << relNormThre;
+        CCC_WARN_STREAM(ss.str());
       }
 
       A0 = A1;
