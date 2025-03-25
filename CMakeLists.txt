@@ -16,7 +16,7 @@ option(USE_ROS2 "Use ROS2" OFF)
 include(cmake/base.cmake)
 project(centroidal_control_collection LANGUAGES CXX)
 
-if(DEFINED USE_ROS2)
+if(USE_ROS2)
   set(DOXYGEN_HTML_OUTPUT html)
 
   # mc_rtc
