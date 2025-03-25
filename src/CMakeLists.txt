@@ -1,7 +1,9 @@
-find_package(rclcpp REQUIRED)
-find_package(std_msgs REQUIRED)
-find_package(std_srvs REQUIRED)
-find_package(visualization_msgs REQUIRED)
+if(USE_ROS2)
+  find_package(rclcpp REQUIRED)
+  find_package(std_msgs REQUIRED)
+  find_package(std_srvs REQUIRED)
+  find_package(visualization_msgs REQUIRED)
+endif()
 
 add_library(CCC
   CommonModels.cpp
