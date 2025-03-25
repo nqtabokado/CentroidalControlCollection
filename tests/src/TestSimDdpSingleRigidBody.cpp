@@ -2,8 +2,8 @@
 
 #include <gtest/gtest.h>
 
-#include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/float64_multi_array.hpp>
+#include <rclcpp/rclcpp.hpp>
 #include <std_srvs/srv/empty.hpp>
 
 #include <array>
@@ -28,11 +28,15 @@ public:
   {
     // Setup ROS
     control_pub_ = nh_->create_publisher<std_msgs::msg::Float64MultiArray>("control", 1);
-    state_sub_ = nh_->create_subscription<std_msgs::msg::Float64MultiArray>("state", 1, std::bind(&TestSimDdpSingleRigidBody::stateCallback, this, _1));
+    state_sub_ = nh_->create_subscription<std_msgs::msg::Float64MultiArray>(
+        "state", 1, std::bind(&TestSimDdpSingleRigidBody::stateCallback, this, _1));
 
-    forward_srv_ = nh_->create_service<std_srvs::srv::Empty>("/forward", std::bind(&TestSimDdpSingleRigidBody::forwardCallback, this, _1, _2));
-    jump_srv_ = nh_->create_service<std_srvs::srv::Empty>("/jump", std::bind(&TestSimDdpSingleRigidBody::jumpCallback, this, _1, _2));
-    tilt_srv_ = nh_->create_service<std_srvs::srv::Empty>("/tilt", std::bind(&TestSimDdpSingleRigidBody::tiltCallback, this, _1, _2));
+    forward_srv_ = nh_->create_service<std_srvs::srv::Empty>(
+        "/forward", std::bind(&TestSimDdpSingleRigidBody::forwardCallback, this, _1, _2));
+    jump_srv_ = nh_->create_service<std_srvs::srv::Empty>(
+        "/jump", std::bind(&TestSimDdpSingleRigidBody::jumpCallback, this, _1, _2));
+    tilt_srv_ = nh_->create_service<std_srvs::srv::Empty>(
+        "/tilt", std::bind(&TestSimDdpSingleRigidBody::tiltCallback, this, _1, _2));
   }
 
   void run()
@@ -52,7 +56,8 @@ public:
     initial_param_.pos = Eigen::Vector3d(0.0, 0.0, 1.0);
 
     // Setup contact
-    std::function<CCC::DdpSingleRigidBody::MotionParam(double)> motion_param_func = [this](double t) {
+    std::function<CCC::DdpSingleRigidBody::MotionParam(double)> motion_param_func = [this](double t)
+    {
       CCC::DdpSingleRigidBody::MotionParam motion_param;
       Eigen::Vector2d contact_pos = Eigen::Vector2d::Zero();
       if(forward_duration_ && (*forward_duration_)[0] <= t && t <= (*forward_duration_)[1])
@@ -67,7 +72,8 @@ public:
       motion_param.inertia_mat.diagonal() = moment_of_inertia_;
       return motion_param;
     };
-    std::function<CCC::DdpSingleRigidBody::RefData(double)> ref_data_func = [this](double t) {
+    std::function<CCC::DdpSingleRigidBody::RefData(double)> ref_data_func = [this](double t)
+    {
       CCC::DdpSingleRigidBody::RefData ref_data;
       ref_data.pos << 0.0, 0.0, 1.0;
       if(forward_duration_ && (*forward_duration_)[0] <= t && t <= (*forward_duration_)[1])
@@ -167,7 +173,7 @@ protected:
   }
 
   void forwardCallback(const std::shared_ptr<std_srvs::srv::Empty::Request> request, // req
-                        std::shared_ptr<std_srvs::srv::Empty::Response> response // res
+                       std::shared_ptr<std_srvs::srv::Empty::Response> response // res
   )
   {
     (void)request;
@@ -181,7 +187,6 @@ protected:
     forward_duration_ = std::make_shared<std::array<double, 2>>();
     (*forward_duration_)[0] = t_ + 2.0;
     (*forward_duration_)[1] = t_ + 4.0;
-
   }
 
   void jumpCallback(const std::shared_ptr<std_srvs::srv::Empty::Request> request, // req
@@ -199,7 +204,6 @@ protected:
     jump_duration_ = std::make_shared<std::array<double, 2>>();
     (*jump_duration_)[0] = t_ + 2.0;
     (*jump_duration_)[1] = t_ + 2.4;
-
   }
 
   void tiltCallback(const std::shared_ptr<std_srvs::srv::Empty::Request> request, // req
@@ -217,7 +221,6 @@ protected:
     tilt_duration_ = std::make_shared<std::array<double, 2>>();
     (*tilt_duration_)[0] = t_ + 2.0;
     (*tilt_duration_)[1] = t_ + 5.0;
-
   }
 
 protected:

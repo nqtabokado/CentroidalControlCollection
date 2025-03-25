@@ -60,4 +60,6 @@ if(INSTALL_DOCUMENTATION)
   add_subdirectory(doc)
 endif()
 
-ament_package()
+if(USE_ROS2)
+  ament_package()
+endif()
