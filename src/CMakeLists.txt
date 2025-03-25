@@ -43,12 +43,14 @@ target_include_directories(CCC PUBLIC
 )
 target_compile_features(CCC PUBLIC cxx_std_17)
 
-ament_target_dependencies(CCC PUBLIC
-  rclcpp
-  std_msgs
-  std_srvs
-  visualization_msgs
-)
+if(USE_ROS2)
+  ament_target_dependencies(CCC PUBLIC
+    rclcpp
+    std_msgs
+    std_srvs
+    visualization_msgs
+  )
+endif()
 
 if(BUILD_SHARED_LIBS)
   set_target_properties(CCC PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR} VERSION ${PROJECT_VERSION})
