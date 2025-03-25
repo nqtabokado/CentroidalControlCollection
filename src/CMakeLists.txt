@@ -21,7 +21,7 @@ add_library(CCC
   DdpCentroidal.cpp
   DdpSingleRigidBody.cpp
   )
-if(DEFINED USE_ROS2)
+if(USE_ROS2)
   target_include_directories(CCC PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>

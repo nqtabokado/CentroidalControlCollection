@@ -57,15 +57,15 @@ jobs:
         with:
           ros: |
             apt: ros-base
-            - name: Install Dependencies
-            uses: jrl-umi3218/github-actions/install-dependencies@master
-            with:
-              build-type: ${{ matrix.build-type }}
-              ubuntu: |
-                apt-mirrors:
-                  mc-rtc:
-                    cloudsmith: mc-rtc/head
-                apt: libgtest-dev libeigen-qld-dev libmc-rtc-dev libqpsolvercollection-dev libforcecontrolcollection-dev
+      - name: Install Dependencies
+        uses: jrl-umi3218/github-actions/install-dependencies@master
+        with:
+          build-type: ${{ matrix.build-type }}
+          ubuntu: |
+            apt-mirrors:
+              mc-rtc:
+                cloudsmith: mc-rtc/head
+            apt: cmake libgtest-dev libeigen-qld-dev libmc-rtc-dev libqpsolvercollection-dev libforcecontrolcollection-dev
       # - name: Setup catkin workspace
       #   run: |
       #     mkdir -p ${GITHUB_WORKSPACE}/catkin_ws/src/
