@@ -2,9 +2,9 @@
 
 #include <gtest/gtest.h>
 
-#include <ros/ros.h>
-#include <std_msgs/Float64MultiArray.h>
-#include <std_srvs/Empty.h>
+#include <std_msgs/msg/float64_multi_array.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <std_srvs/srv/empty.hpp>
 
 #include <array>
 #include <chrono>
@@ -18,17 +18,25 @@
 #include "ContactManager.h"
 #include "SimModels.h"
 
+using std::placeholders::_1;
+using std::placeholders::_2;
+
 class TestSimDdpSingleRigidBody
 {
 public:
   TestSimDdpSingleRigidBody()
   {
     // Setup ROS
-    control_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("control", 1);
-    state_sub_ = nh_.subscribe("state", 1, &TestSimDdpSingleRigidBody::stateCallback, this);
-    forward_srv_ = nh_.advertiseService("/forward", &TestSimDdpSingleRigidBody::forwardCallback, this);
-    jump_srv_ = nh_.advertiseService("/jump", &TestSimDdpSingleRigidBody::jumpCallback, this);
-    tilt_srv_ = nh_.advertiseService("/tilt", &TestSimDdpSingleRigidBody::tiltCallback, this);
+    control_pub_ = nh_->create_publisher<std_msgs::msg::Float64MultiArray>("control", 1);
+    state_sub_ = nh_->create_subscription<std_msgs::msg::Float64MultiArray>(
+        "state", 1, std::bind(&TestSimDdpSingleRigidBody::stateCallback, this, _1));
+
+    forward_srv_ = nh_->create_service<std_srvs::srv::Empty>(
+        "/forward", std::bind(&TestSimDdpSingleRigidBody::forwardCallback, this, _1, _2));
+    jump_srv_ = nh_->create_service<std_srvs::srv::Empty>(
+        "/jump", std::bind(&TestSimDdpSingleRigidBody::jumpCallback, this, _1, _2));
+    tilt_srv_ = nh_->create_service<std_srvs::srv::Empty>(
+        "/tilt", std::bind(&TestSimDdpSingleRigidBody::tiltCallback, this, _1, _2));
   }
 
   void run()
@@ -86,10 +94,13 @@ public:
     };
 
     // Run control loop
-    ros::Rate rate(200);
-    while(ros::ok())
+    rclcpp::Rate rate(200);
+    while(rclcpp::ok())
     {
-      t_ = ros::Time::now().toSec();
+      // rclcpp::Clock clock;
+      // rclcpp::Time time_now = clock.now();
+      // double t_ = time_now.seconds();
+      t_ = nh_->get_clock()->now().seconds();
 
       if(forward_duration_ && (*forward_duration_)[1] < t_)
       {
@@ -104,7 +115,7 @@ public:
         tilt_duration_.reset();
       }
 
-      ros::spinOnce();
+      rclcpp::spin_some(nh_);
 
       // Plan
       if(!initial_param_.u_list.empty())
@@ -122,7 +133,7 @@ public:
       Eigen::VectorXd planned_force_scales = ddp.planOnce(motion_param_func, ref_data_func, initial_param_, t_);
 
       // Publish
-      std_msgs::Float64MultiArray msg;
+      std_msgs::msg::Float64MultiArray msg;
       const auto & motion_param = motion_param_func(t_);
       for(const auto & contact : motion_param.contact_list)
       {
@@ -145,15 +156,20 @@ public:
           msg.data.insert(msg.data.end(), vertexForceVec.begin(), vertexForceVec.end());
         }
       }
-      control_pub_.publish(msg);
+      RCLCPP_INFO(nh_->get_logger(), "Publishing Float64MultiArray: ");
+      for (size_t i = 0; i < msg.data.size(); ++i) {
+          RCLCPP_INFO(nh_->get_logger(), "  data[%zu] = %f", i, msg.data[i]);
+      }
+      control_pub_->publish(msg);
 
       rate.sleep();
     }
   }
 
 protected:
-  void stateCallback(const std_msgs::Float64MultiArray::ConstPtr & msg)
+  void stateCallback(const std_msgs::msg::Float64MultiArray::SharedPtr msg)
   {
+    RCLCPP_INFO(nh_->get_logger(), "stateCallback called");
     const CCC::DdpSingleRigidBody::DdpProblem::StateDimVector & state =
         Eigen::Map<const CCC::DdpSingleRigidBody::DdpProblem::StateDimVector>(msg->data.data());
     initial_param_.pos = state.segment<3>(0);
@@ -162,52 +178,61 @@ protected:
     initial_param_.angular_vel = state.segment<3>(9);
   }
 
-  bool forwardCallback(std_srvs::Empty::Request &, // req
-                       std_srvs::Empty::Response & // res
+  void forwardCallback(const std::shared_ptr<std_srvs::srv::Empty::Request> request, // req
+                       std::shared_ptr<std_srvs::srv::Empty::Response> response // res
   )
   {
+    (void)request;
+    (void)response;
+
     if(forward_duration_)
     {
-      return false;
+      return;
     }
 
     forward_duration_ = std::make_shared<std::array<double, 2>>();
     (*forward_duration_)[0] = t_ + 2.0;
     (*forward_duration_)[1] = t_ + 4.0;
-
-    return true;
   }
 
-  bool jumpCallback(std_srvs::Empty::Request &, // req
-                    std_srvs::Empty::Response & // res
+  bool jumpCallback(const std::shared_ptr<std_srvs::srv::Empty::Request> request, // req
+                    std::shared_ptr<std_srvs::srv::Empty::Response> response // res
   )
   {
+    (void)request;
+    (void)response;
+    RCLCPP_INFO(nh_->get_logger(), "jumpCallback called 1");
     if(jump_duration_)
     {
+      RCLCPP_INFO(nh_->get_logger(), "jumpCallback called 2");
+
       return false;
     }
+    RCLCPP_INFO(nh_->get_logger(), "jumpCallback called 3");
 
     jump_duration_ = std::make_shared<std::array<double, 2>>();
     (*jump_duration_)[0] = t_ + 2.0;
     (*jump_duration_)[1] = t_ + 2.4;
+    RCLCPP_INFO(nh_->get_logger(), "jumpCallback called 4");
 
     return true;
   }
 
-  bool tiltCallback(std_srvs::Empty::Request &, // req
-                    std_srvs::Empty::Response & // res
+  void tiltCallback(const std::shared_ptr<std_srvs::srv::Empty::Request> request, // req
+                    std::shared_ptr<std_srvs::srv::Empty::Response> response // res
   )
   {
+    (void)request;
+    (void)response;
+
     if(tilt_duration_)
     {
-      return false;
+      return;
     }
 
     tilt_duration_ = std::make_shared<std::array<double, 2>>();
     (*tilt_duration_)[0] = t_ + 2.0;
     (*tilt_duration_)[1] = t_ + 5.0;
-
-    return true;
   }
 
 protected:
@@ -226,12 +251,12 @@ protected:
   std::shared_ptr<std::array<double, 2>> jump_duration_;
   std::shared_ptr<std::array<double, 2>> tilt_duration_;
 
-  ros::NodeHandle nh_;
-  ros::Publisher control_pub_;
-  ros::Subscriber state_sub_;
-  ros::ServiceServer forward_srv_;
-  ros::ServiceServer jump_srv_;
-  ros::ServiceServer tilt_srv_;
+  std::shared_ptr<rclcpp::Node> nh_ = rclcpp::Node::make_shared("test_sim_ddp_single_rigid_body");
+  rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr control_pub_;
+  rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr state_sub_;
+  rclcpp::Service<std_srvs::srv::Empty>::SharedPtr forward_srv_;
+  rclcpp::Service<std_srvs::srv::Empty>::SharedPtr jump_srv_;
+  rclcpp::Service<std_srvs::srv::Empty>::SharedPtr tilt_srv_;
 };
 
 TEST(TestSimDdpSingleRigidBody, Test1)
@@ -244,7 +269,7 @@ TEST(TestSimDdpSingleRigidBody, Test1)
 int main(int argc, char ** argv)
 {
   // Setup ROS
-  ros::init(argc, argv, "test_sim_ddp_srb");
+  rclcpp::init(argc, argv);
 
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

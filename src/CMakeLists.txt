@@ -1,3 +1,10 @@
+if(USE_ROS2)
+  find_package(rclcpp REQUIRED)
+  find_package(std_msgs REQUIRED)
+  find_package(std_srvs REQUIRED)
+  find_package(visualization_msgs REQUIRED)
+endif()
+
 add_library(CCC
   CommonModels.cpp
   PreviewControlZmp.cpp
@@ -34,8 +41,20 @@ target_link_libraries(CCC PUBLIC
   nmpc_ddp::nmpc_ddp
 )
 
+# target_include_directories(CCC PUBLIC
+#   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+#   $<INSTALL_INTERFACE:include>
+# )
 target_compile_features(CCC PUBLIC cxx_std_17)
 
+# if(USE_ROS2)
+#   ament_target_dependencies(CCC PUBLIC
+#     rclcpp
+#     std_msgs
+#     std_srvs
+#     visualization_msgs
+#   )
+# endif()
 if(BUILD_SHARED_LIBS)
   set_target_properties(CCC PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR} VERSION ${PROJECT_VERSION})
 endif()

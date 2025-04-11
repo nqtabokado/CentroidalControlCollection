@@ -26,6 +26,10 @@ if(USE_ROS2)
   # mc_rtc
   find_package(ament_cmake REQUIRED)
   find_package(rclcpp REQUIRED)
+  find_package(std_msgs REQUIRED)
+  find_package(std_srvs REQUIRED)
+  find_package(visualization_msgs REQUIRED)
+  option(BUILD_TESTING "Build test" ON)
 else()
   option(BUILD_TESTING "Build test" ON)
 endif()
@@ -79,6 +83,15 @@ set(\@PROJECT_NAME\@_LIBRARIES \@PROJECT_NAME\@::CCC)
     )
 endif()
 
+ament_export_dependencies(
+  rclcpp
+  qp_solver_collection
+  force_control_collection
+  nmpc_ddp
+  std_msgs
+  std_srvs
+  visualization_msgs
+)
 if(BUILD_TESTING)
   add_subdirectory(tests)
 endif()
@@ -90,12 +103,6 @@ endif()
 if(USE_ROS2)
   ament_export_include_directories(include)
   ament_export_libraries(CCC)
-  ament_export_dependencies(
-    rclcpp
-    qp_solver_collection
-    force_control_collection
-    nmpc_ddp
-  )
   ament_export_targets(${PROJECT_NAME})
   ament_package()
 endif() 
